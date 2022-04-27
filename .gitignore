@@ -1,1 +1,3 @@
 **/target/
+**/app-db-data/
+**/__pycache__/
