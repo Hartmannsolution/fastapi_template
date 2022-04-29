@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 # from app.db import engine, database, metadata
 
 app = FastAPI()
-models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine) # creates all tables that extends the Base class.
 # # For the database.
 # @app.on_event("startup")
 # async def startup():
@@ -52,18 +52,20 @@ async def get_model(model_name: ModelName):
 
     return {"model_name": model_name, "message": "Have some residuals"}
 
-# route served from file. api/ping.py by using fastapi.APIRouter
+# FROM OTHER FILES: route served from file. api/ping.py by using fastapi.APIRouter
 app.include_router(ping.router)
 
+# USING ORM WITH SQLALCHEMY
 # Dependency: We need to have an independent database session/connection (SessionLocal) per request, use the same session through all the request and then close it after the request is finished.
 def get_db():
-    db = SessionLocal()
+    db = SessionLocal() # SessionLocal from db module contains the sqlalchemy engine.
     try:
         yield db
     finally:
         db.close()
 
-# These methods can not use async (since it is not supported by )
+# These methods can not use async (since it is not supported by sqlalchemy)
+# CREATE
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = facade.get_user_by_email(db, email=user.email)
@@ -71,13 +73,13 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     return facade.create_user(db=db, user=user)
 
-
+# READ ALL
 @app.get("/users/", response_model=list[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = facade.get_users(db, skip=skip, limit=limit)
     return users
 
-
+# READ BY ID
 @app.get("/users/{user_id}", response_model=schemas.User)
 def read_user(user_id: int, db: Session = Depends(get_db)):
     db_user = facade.get_user(db, user_id=user_id)
@@ -85,14 +87,14 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-
+# CREATE ITEM ON USER
 @app.post("/users/{user_id}/items/", response_model=schemas.Item)
 def create_item_for_user(
     user_id: int, item: schemas.ItemCreate, db: Session = Depends(get_db)
 ):
     return facade.create_user_item(db=db, item=item, user_id=user_id)
 
-
+# READ ALL
 @app.get("/items/", response_model=list[schemas.Item])
 def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     items = facade.get_items(db, skip=skip, limit=limit)

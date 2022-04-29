@@ -31,3 +31,5 @@ class User(UserBase):
     items: list[Item] = [] # valid from python 3.9
     class Config:
         orm_mode = True
+    def __repr__(self):
+        return 'user: '+id
